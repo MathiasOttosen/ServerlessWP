@@ -1,1 +1,0 @@
-;"use strict";(globalThis.webpackChunkintegration_google_drive=globalThis.webpackChunkintegration_google_drive||[]).push([[147,769],{1609:e=>{e.exports=window.React},790:e=>{e.exports=window.ReactJSXRuntime},6087:e=>{e.exports=window.wp.element}},e=>{e.O(0,[96,804],(()=>e(e.s=2608))),e.O()}]);
