@@ -97,7 +97,7 @@ $table_prefix = isset($_ENV['TABLE_PREFIX']) ? $_ENV['TABLE_PREFIX'] : 'wp_';
  *
  * @link https://wordpress.org/documentation/article/debugging-in-wordpress/
  */
-define( 'WP_DEBUG', false );
+define( 'WP_DEBUG', true );
 
 /* Add any custom values between this line and the "stop editing" line. */
 
