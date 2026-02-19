@@ -529,13 +529,7 @@
 				return;
 			}
 
-			// Leave the title as empty to reuse the original title as a placeholder if set.
-			var nav_menu_item = Object.assign( {}, menu_item.attributes );
-			if ( nav_menu_item.title === nav_menu_item.original_title ) {
-				nav_menu_item.title = '';
-			}
-
-			this.currentMenuControl.addItemToMenu( nav_menu_item );
+			this.currentMenuControl.addItemToMenu( menu_item.attributes );
 
 			$( menuitemTpl ).find( '.menu-item-handle' ).addClass( 'item-added' );
 		},
@@ -667,7 +661,6 @@
 				itemType = dataContainer.data( 'type' ),
 				itemObject = dataContainer.data( 'object' ),
 				itemTypeLabel = dataContainer.data( 'type_label' ),
-				inputError = container.find('.create-item-error'),
 				promise;
 
 			if ( ! this.currentMenuControl ) {
@@ -678,18 +671,13 @@
 			if ( 'post_type' !== itemType ) {
 				return;
 			}
+
 			if ( '' === itemName.val().trim() ) {
-				container.addClass( 'form-invalid' );
-				itemName.attr('aria-invalid', 'true');
-				itemName.attr('aria-describedby', inputError.attr('id'));
-				inputError.slideDown( 'fast' );
-				wp.a11y.speak( inputError.text() );
+				itemName.addClass( 'invalid' );
+				itemName.focus();
 				return;
 			} else {
-				container.removeClass( 'form-invalid' );
-				itemName.attr('aria-invalid', 'false');
-				itemName.removeAttr('aria-describedby');
-				inputError.hide();
+				itemName.removeClass( 'invalid' );
 				container.find( '.accordion-section-title' ).addClass( 'loading' );
 			}
 
@@ -3148,6 +3136,7 @@
 				item,
 				{
 					nav_menu_term_id: menuControl.params.menu_id,
+					original_title: item.title,
 					position: position
 				}
 			);

@@ -46,9 +46,6 @@
 .wp-block-buttons.has-custom-font-size .wp-block-button__link{
   font-size:inherit;
 }
-.wp-block-buttons .wp-block-button__link{
-  width:100%;
-}
 
 .wp-block-button.aligncenter{
   text-align:center;

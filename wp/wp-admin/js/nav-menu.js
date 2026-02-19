@@ -298,46 +298,44 @@
 
 						$.each( parentDropdowns, function() {
 							var parentDropdown = $( this ),
-								currentItemID = parseInt( parentDropdown.closest( 'li.menu-item' ).find( '.menu-item-data-db-id' ).val() ),
-								currentParentID = parseInt( parentDropdown.closest( 'li.menu-item' ).find( '.menu-item-data-parent-id' ).val() ),
+								$html = '',
+								$selected = '',
+								currentItemID = parentDropdown.closest( 'li.menu-item' ).find( '.menu-item-data-db-id' ).val(),
+								currentparentID = parentDropdown.closest( 'li.menu-item' ).find( '.menu-item-data-parent-id' ).val(),
 								currentItem = parentDropdown.closest( 'li.menu-item' ),
 								currentMenuItemChild = currentItem.childMenuItems(),
-								excludeMenuItem =  /** @type {number[]} */ [ currentItemID ];
-
-							parentDropdown.empty();
+								excludeMenuItem = [ currentItemID ];
 
 							if ( currentMenuItemChild.length > 0 ) {
 								$.each( currentMenuItemChild, function(){
 									var childItem = $(this),
-										childID = parseInt( childItem.find( '.menu-item-data-db-id' ).val() );
+										childID = childItem.find( '.menu-item-data-db-id' ).val();
 
 									excludeMenuItem.push( childID );
 								});
 							}
 
-							parentDropdown.append(
-								$( '<option>', {
-									value: '0',
-									selected: currentParentID === 0,
-									text: wp.i18n._x( 'No Parent', 'menu item without a parent in navigation menu' ),
-								} )
-							);
+							if ( currentparentID == 0 ) {
+								$selected = 'selected';
+							}
+
+							$html += '<option ' + $selected + ' value="0">' + wp.i18n._x( 'No Parent', 'menu item without a parent in navigation menu' ) + '</option>';
 
 							$.each( menuItems, function() {
 								var menuItem = $(this),
-								menuID = parseInt( menuItem.find( '.menu-item-data-db-id' ).val() ),
+								$selected = '',
+								menuID = menuItem.find( '.menu-item-data-db-id' ).val(),
 								menuTitle = menuItem.find( '.edit-menu-item-title' ).val();
 
 								if ( ! excludeMenuItem.includes( menuID ) ) {
-									parentDropdown.append(
-										$( '<option>', {
-											value: menuID.toString(),
-											selected: currentParentID === menuID,
-											text: menuTitle,
-										} )
-									);
+									if ( currentparentID == menuID ) {
+										$selected = 'selected';
+									}
+									$html += '<option ' + $selected + ' value="' + menuID + '">' + menuTitle + '</option>';
 								}
 							});
+
+							parentDropdown.html( $html );
 						});
 						
 					});
@@ -351,9 +349,9 @@
 							var orderDropdown = $( this ),
 								menuItem = orderDropdown.closest( 'li.menu-item' ).first(),
 								depth = menuItem.menuItemDepth(),
-								isPrimaryMenuItem = ( 0 === depth );
-
-							orderDropdown.empty();
+								isPrimaryMenuItem = ( 0 === depth ),
+								$html = '',
+								$selected = '';
 
 							if ( isPrimaryMenuItem ) {
 								var primaryItems = $( '.menu-item-depth-0' ),
@@ -362,19 +360,17 @@
 								itemPosition = primaryItems.index( menuItem ) + 1;
 
 								for ( let i = 1; i < totalMenuItems + 1; i++ ) {
-									var itemString = wp.i18n.sprintf(
+									$selected = '';
+									if ( i == itemPosition ) { 
+										$selected = 'selected';
+									}
+									var itemString = wp.i18n.sprintf( 
 										/* translators: 1: The current menu item number, 2: The total number of menu items. */
 										wp.i18n._x( '%1$s of %2$s', 'part of a total number of menu items' ),
 										i,
 										totalMenuItems
 									);
-									orderDropdown.append(
-										$( '<option>', {
-											selected: i === itemPosition,
-											value: i.toString(),
-											text: itemString,
-										} )
-									);
+									$html += '<option ' + $selected + ' value="' + i + '">' + itemString + '</option>';
 								}
 
 							} else {
@@ -386,22 +382,22 @@
 								itemPosition = $( subItems.parents('.menu-item').get().reverse() ).index( menuItem ) + 1;
 
 								for ( let i = 1; i < totalSubMenuItems + 1; i++ ) {
-									var submenuString = wp.i18n.sprintf(
+									$selected = '';
+									if ( i == itemPosition ) {
+										$selected = 'selected';
+									}
+									var submenuString = wp.i18n.sprintf( 
 										/* translators: 1: The current submenu item number, 2: The total number of submenu items. */
 										wp.i18n._x( '%1$s of %2$s', 'part of a total number of menu items' ),
 										i,
 										totalSubMenuItems
 									);
-									orderDropdown.append(
-										$( '<option>', {
-											selected: i === itemPosition,
-											value: i.toString(),
-											text: submenuString,
-										} )
-									);
+									$html += '<option ' + $selected + ' value="' + i + '">' + submenuString + '</option>';
 								}
 
 							}
+
+							orderDropdown.html( $html );
 						});
 						
 					});
@@ -1294,18 +1290,13 @@
 				}
 
 				if ( this.checked === true ) {
-					const $li = $( '<li>', { 'data-menu-item-id': menuItemID } );
-					$li.append( $( '<span>', {
-						'class': 'pending-menu-item-name',
-						text: menuItemName
-					} ) );
-					$li.append( ' ' );
-					$li.append( $( '<span>', {
-						'class': 'pending-menu-item-type',
-						text: '(' + menuItemType + ')',
-					} ) );
-					$li.append( $( '<span>', { 'class': 'separator' } ) );
-					$( '#pending-menu-items-to-delete ul' ).append( $li );
+					$( '#pending-menu-items-to-delete ul' ).append(
+						'<li data-menu-item-id="' + menuItemID + '">' +
+							'<span class="pending-menu-item-name">' + menuItemName + '</span> ' +
+							'<span class="pending-menu-item-type">(' + menuItemType + ')</span>' +
+							'<span class="separator"></span>' +
+						'</li>'
+					);
 				}
 
 				$( '#pending-menu-items-to-delete li .separator' ).html( ', ' );
@@ -1406,25 +1397,14 @@
 
 		updateQuickSearchResults : function(input) {
 			var panel, params,
-				minSearchLength = 1,
-				q = input.val(),
-				pageSearchChecklist = $( '#page-search-checklist' );
+				minSearchLength = 2,
+				q = input.val();
 
 			/*
-			 * Avoid a new Ajax search when the pressed key (e.g. arrows)
-			 * doesn't change the searched term.
+			 * Minimum characters for a search. Also avoid a new Ajax search when
+			 * the pressed key (e.g. arrows) doesn't change the searched term.
 			 */
-			if ( api.lastSearch == q ) {
-				return;
-			}
-
-			/*
-			 * Reset results when search is less than or equal to 
-			 * minimum characters for searched term.
-			 */
-			if ( q.length <= minSearchLength ) {
-				pageSearchChecklist.empty();
-				wp.a11y.speak( wp.i18n.__( 'Search results cleared' ) );
+			if ( q.length < minSearchLength || api.lastSearch == q ) {
 				return;
 			}
 
@@ -1719,8 +1699,9 @@
 		},
 
 		eventOnClickMenuSave : function() {
-			var menuName = $('#menu-name'),
-				menuNameVal = menuName.val();
+			var locs = '',
+			menuName = $('#menu-name'),
+			menuNameVal = menuName.val();
 
 			// Cancel and warn if invalid menu name.
 			if ( ! menuNameVal || ! menuNameVal.replace( /\s+/, '' ) ) {
@@ -1728,17 +1709,10 @@
 				return false;
 			}
 			// Copy menu theme locations.
-			// Note: This appears to be dead code since #nav-menu-theme-locations no longer exists, perhaps removed in r32842.
-			var $updateNavMenu = $('#update-nav-menu');
 			$('#nav-menu-theme-locations select').each(function() {
-				$updateNavMenu.append(
-					$( '<input>', {
-						type: 'hidden',
-						name: this.name,
-						value: $( this ).val(),
-					} )
-				);
+				locs += '<input type="hidden" name="' + this.name + '" value="' + $(this).val() + '" />';
 			});
+			$('#update-nav-menu').append( locs );
 			// Update menu item position data.
 			api.menuList.find('.menu-item-data-position').val( function(index) { return index + 1; } );
 			window.onbeforeunload = null;
@@ -1781,14 +1755,9 @@
 			$item;
 
 			if( ! $items.length ) {
-				let noResults = wp.i18n.__( 'No results found.' );
-				const li = $( '<li>' );
-				const p = $( '<p>', { text: noResults } );
-				li.append( p );
-				$('.categorychecklist', panel).empty().append( li );
+				$('.categorychecklist', panel).html( '<li><p>' + wp.i18n.__( 'No results found.' ) + '</p></li>' );
 				$( '.spinner', panel ).removeClass( 'is-active' );
 				wrapper.addClass( 'has-no-menu-item' );
-				wp.a11y.speak( noResults, 'assertive' );
 				return;
 			}
 
@@ -1815,7 +1784,6 @@
 			});
 
 			$('.categorychecklist', panel).html( $items );
-			wp.a11y.speak( wp.i18n.sprintf( wp.i18n.__( '%d Search Results Found' ), $items.length ), 'assertive' );
 			$( '.spinner', panel ).removeClass( 'is-active' );
 			wrapper.removeClass( 'has-no-menu-item' );
 

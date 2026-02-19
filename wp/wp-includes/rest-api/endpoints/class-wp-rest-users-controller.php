@@ -220,7 +220,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		if ( 'edit' === $request['context'] && ! current_user_can( 'list_users' ) ) {
 			return new WP_Error(
 				'rest_forbidden_context',
-				__( 'Sorry, you are not allowed to edit users.' ),
+				__( 'Sorry, you are not allowed to list users.' ),
 				array( 'status' => rest_authorization_required_code() )
 			);
 		}
@@ -379,10 +379,6 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 			$users = array();
 
 			foreach ( $query->get_results() as $user ) {
-				if ( 'edit' === $request['context'] && ! current_user_can( 'edit_user', $user->ID ) ) {
-					continue;
-				}
-
 				$data    = $this->prepare_item_for_response( $user, $request );
 				$users[] = $this->prepare_response_for_collection( $data );
 			}
@@ -399,13 +395,10 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 		$total_users = $query->get_total();
 
 		if ( $total_users < 1 ) {
-			// Out-of-bounds, run the query without pagination/offset to get the total count.
+			// Out-of-bounds, run the query again without LIMIT for total count.
 			unset( $prepared_args['number'], $prepared_args['offset'] );
-
-			$prepared_args['number'] = 1;
-			$prepared_args['fields'] = 'ID';
-			$count_query             = new WP_User_Query( $prepared_args );
-			$total_users             = $count_query->get_total();
+			$count_query = new WP_User_Query( $prepared_args );
+			$total_users = $count_query->get_total();
 		}
 
 		$response->header( 'X-WP-Total', (int) $total_users );
@@ -486,15 +479,13 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 			return true;
 		}
 
-		if ( 'edit' === $request['context'] && ! current_user_can( 'edit_user', $user->ID ) ) {
+		if ( 'edit' === $request['context'] && ! current_user_can( 'list_users' ) ) {
 			return new WP_Error(
-				'rest_forbidden_context',
-				__( 'Sorry, you are not allowed to edit this user.' ),
+				'rest_user_cannot_view',
+				__( 'Sorry, you are not allowed to list users.' ),
 				array( 'status' => rest_authorization_required_code() )
 			);
-		}
-
-		if ( ! current_user_can( 'edit_user', $user->ID ) && ! current_user_can( 'list_users' ) && ! count_user_posts( $user->ID, $types ) ) {
+		} elseif ( ! count_user_posts( $user->ID, $types ) && ! current_user_can( 'edit_user', $user->ID ) && ! current_user_can( 'list_users' ) ) {
 			return new WP_Error(
 				'rest_user_cannot_view',
 				__( 'Sorry, you are not allowed to list users.' ),
@@ -1095,7 +1086,7 @@ class WP_REST_Users_Controller extends WP_REST_Controller {
 			$data['slug'] = $user->user_nicename;
 		}
 
-		if ( in_array( 'roles', $fields, true ) && ( current_user_can( 'list_users' ) || current_user_can( 'edit_user', $user->ID ) ) ) {
+		if ( in_array( 'roles', $fields, true ) ) {
 			// Defensively call array_values() to ensure an array is returned.
 			$data['roles'] = array_values( $user->roles );
 		}
